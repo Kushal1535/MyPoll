@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
+	"pulsepoll/backend/config"
 	"pulsepoll/backend/controllers"
 	"pulsepoll/backend/middleware"
 	"pulsepoll/backend/routes"
@@ -22,39 +24,40 @@ import (
 var mongoClient *mongo.Client
 var redisClient *redis.Client
 
-// Connect to MongoDB
+// Connect to MongoDB using MONGODB_URI.
+// Falls back to local MongoDB during development.
 func connectMongoDB() {
-	ctx, cancel := context.WithTimeout(
-		context.Background(),
-		10*time.Second,
-	)
-	defer cancel()
-
-	clientOptions := options.Client().
-		ApplyURI("mongodb://localhost:27017")
-
-	client, err := mongo.Connect(clientOptions)
+	client, err := config.ConnectMongoDB()
 	if err != nil {
-		log.Fatal("MongoDB connection error:", err)
-	}
-
-	if err := client.Ping(ctx, nil); err != nil {
-		log.Fatal("MongoDB ping failed:", err)
+		log.Fatal("MongoDB connection failed:", err)
 	}
 
 	mongoClient = client
 	log.Println("MongoDB connected successfully!")
 }
 
-// Connect to Redis
+// Connect to Redis using REDIS_URL.
+// Supports hosted Redis services with TLS.
 func connectRedis() {
-	redisClient = redis.NewClient(&redis.Options{
-		Addr: "127.0.0.1:6379",
-	})
+	redisURL := strings.TrimSpace(os.Getenv("REDIS_URL"))
+
+	if redisURL != "" {
+		redisOptions, err := redis.ParseURL(redisURL)
+		if err != nil {
+			log.Fatal("Invalid REDIS_URL:", err)
+		}
+
+		redisClient = redis.NewClient(redisOptions)
+	} else {
+		// Local development fallback.
+		redisClient = redis.NewClient(&redis.Options{
+			Addr: "127.0.0.1:6379",
+		})
+	}
 
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		5*time.Second,
+		10*time.Second,
 	)
 	defer cancel()
 
@@ -65,44 +68,98 @@ func connectRedis() {
 	log.Println("Redis connected successfully!")
 }
 
-func main() {
-	// Initialize database connections
-	connectMongoDB()
-	connectRedis()
+// Configure allowed frontend origins.
+// FRONTEND_URL can contain comma-separated origins.
+func corsMiddleware() gin.HandlerFunc {
+	allowedOrigins := map[string]bool{
+		"http://localhost:5173": true,
+	}
 
-	// Load JWT secret
+	frontendURLs := strings.TrimSpace(os.Getenv("FRONTEND_URL"))
+
+	if frontendURLs != "" {
+		for _, origin := range strings.Split(frontendURLs, ",") {
+			origin = strings.TrimSpace(origin)
+			if origin != "" {
+				allowedOrigins[origin] = true
+			}
+		}
+	}
+
+	return func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
+
+		if allowedOrigins[origin] {
+			c.Header("Access-Control-Allow-Origin", origin)
+			c.Header("Vary", "Origin")
+			c.Header(
+				"Access-Control-Allow-Methods",
+				"GET, POST, PUT, PATCH, DELETE, OPTIONS",
+			)
+			c.Header(
+				"Access-Control-Allow-Headers",
+				"Origin, Content-Type, Authorization",
+			)
+		}
+
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+
+		c.Next()
+	}
+}
+
+func main() {
+	// Load required JWT secret.
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		log.Fatal("JWT_SECRET environment variable is required")
 	}
 
-	// MongoDB database
+	// Initialize database connections.
+	connectMongoDB()
+	defer func() {
+		if err := mongoClient.Disconnect(context.Background()); err != nil {
+			log.Println("MongoDB disconnect error:", err)
+		}
+	}()
+
+	connectRedis()
+	defer func() {
+		if err := redisClient.Close(); err != nil {
+			log.Println("Redis disconnect error:", err)
+		}
+	}()
+
+	// MongoDB database.
 	database := mongoClient.Database("PulsePoll")
 
-	// Initialize MongoDB collections
+	// MongoDB collections.
 	userCollection := database.Collection("users")
 	pollCollection := database.Collection("polls")
 	voteCollection := database.Collection("votes")
 
-	// Initialize database indexes
+	// Initialize database indexes.
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		10*time.Second,
+		15*time.Second,
 	)
 
-	// Authentication service
+	// Authentication service.
 	authService := services.NewAuthService(
 		userCollection,
 		jwtSecret,
 	)
 
-	// Unique email index
+	// Unique email index.
 	if err := authService.EnsureIndexes(ctx); err != nil {
 		cancel()
 		log.Fatal("Failed to create user indexes:", err)
 	}
 
-	// Unique vote index: one vote per voter per poll
+	// Unique vote index: one vote per voter per poll.
 	_, err := voteCollection.Indexes().CreateOne(
 		ctx,
 		mongo.IndexModel{
@@ -114,17 +171,16 @@ func main() {
 		},
 	)
 
+	cancel()
+
 	if err != nil {
-		cancel()
 		log.Fatal("Failed to create vote index:", err)
 	}
 
-	cancel()
-
-	// Initialize authentication controller
+	// Initialize authentication controller.
 	authController := controllers.NewAuthController(authService)
 
-	// Initialize poll service with MongoDB and Redis
+	// Initialize poll service with MongoDB and Redis.
 	pollService := services.NewPollService(
 		pollCollection,
 		voteCollection,
@@ -133,7 +189,7 @@ func main() {
 
 	pollController := controllers.NewPollController(pollService)
 
-	// Initialize vote service and controller
+	// Initialize vote service and controller.
 	voteService := services.NewVoteService(
 		voteCollection,
 		pollCollection,
@@ -142,34 +198,19 @@ func main() {
 
 	voteController := controllers.NewVoteController(voteService)
 
-	// Initialize WebSocket controller
+	// Initialize WebSocket controller.
 	websocketController := controllers.NewWebSocketController(redisClient)
 
-	// Initialize Gin router
+	// Initialize Gin router.
 	router := gin.Default()
-	router.Use(func(c *gin.Context) {
-		origin := c.GetHeader("Origin")
 
-		if origin == "http://localhost:5173" {
-			c.Header("Access-Control-Allow-Origin", origin)
-			c.Header("Vary", "Origin")
-			c.Header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-			c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
-		}
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(http.StatusNoContent)
-			return
-		}
-
-		c.Next()
-	})
+	router.Use(corsMiddleware())
 
 	if err := router.SetTrustedProxies(nil); err != nil {
 		log.Fatal("Failed to configure trusted proxies:", err)
 	}
 
-	// Application health
+	// Application health.
 	router.GET("/api/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"application": "PulsePoll",
@@ -177,7 +218,7 @@ func main() {
 		})
 	})
 
-	// MongoDB health
+	// MongoDB health.
 	router.GET("/api/health/db", func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(
 			context.Background(),
@@ -199,7 +240,7 @@ func main() {
 		})
 	})
 
-	// Redis health
+	// Redis health.
 	router.GET("/api/health/redis", func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(
 			context.Background(),
@@ -221,22 +262,22 @@ func main() {
 		})
 	})
 
-	// API routes
+	// API routes.
 	api := router.Group("/api")
 
-	// Public authentication routes
+	// Public authentication routes.
 	routes.RegisterAuthRoutes(api, authController)
 
-	// Poll creation and public retrieval routes
+	// Poll creation and public retrieval routes.
 	routes.RegisterPollRoutes(api, pollController)
 
-	// Public voting route
+	// Public voting route.
 	routes.RegisterVoteRoutes(api, voteController)
 
-	// WebSocket route for live poll updates
+	// WebSocket route for live poll updates.
 	routes.RegisterWebSocketRoutes(api, websocketController)
 
-	// Protected authentication test endpoint
+	// Protected authentication test endpoint.
 	api.GET(
 		"/auth/me",
 		middleware.AuthMiddleware(),
@@ -250,10 +291,15 @@ func main() {
 		},
 	)
 
-	// Start server
-	log.Println("PulsePoll server starting on port 8081")
+	// Start server using Render's assigned port.
+	port := strings.TrimSpace(os.Getenv("PORT"))
+	if port == "" {
+		port = "8081"
+	}
 
-	if err := router.Run(":8081"); err != nil {
-		log.Fatal(err)
+	log.Printf("PulsePoll server starting on port %s", port)
+
+	if err := router.Run(":" + port); err != nil {
+		log.Fatal("Server startup failed:", err)
 	}
 }

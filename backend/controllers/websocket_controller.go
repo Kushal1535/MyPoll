@@ -1,10 +1,11 @@
-
 package controllers
 
 import (
 	"context"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +20,7 @@ const (
 	maxMessageSize = 512
 )
 
+// WebSocketController handles live poll updates.
 type WebSocketController struct {
 	redisClient *redis.Client
 }
@@ -29,12 +31,44 @@ func NewWebSocketController(redisClient *redis.Client) *WebSocketController {
 	}
 }
 
+// Check whether the request origin is allowed.
+func isAllowedWebSocketOrigin(origin string) bool {
+	origin = strings.TrimSpace(origin)
+
+	if origin == "" {
+		return false
+	}
+
+	// Local development origin.
+	if origin == "http://localhost:5173" {
+		return true
+	}
+
+	// Production frontend origins.
+	// Multiple origins can be separated by commas.
+	frontendURLs := strings.Split(
+		os.Getenv("FRONTEND_URL"),
+		",",
+	)
+
+	for _, allowedOrigin := range frontendURLs {
+		allowedOrigin = strings.TrimSpace(allowedOrigin)
+
+		if allowedOrigin != "" && origin == allowedOrigin {
+			return true
+		}
+	}
+
+	return false
+}
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+
 	CheckOrigin: func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
-		return origin == "http://localhost:5173"
+		return isAllowedWebSocketOrigin(origin)
 	},
 }
 
@@ -67,7 +101,7 @@ func (wc *WebSocketController) HandlePollUpdates(c *gin.Context) {
 	pubsub := wc.redisClient.Subscribe(ctx, channel)
 	defer pubsub.Close()
 
-	// Wait until Redis confirms the subscription.
+	// Wait for Redis subscription confirmation.
 	if _, err := pubsub.Receive(ctx); err != nil {
 		log.Println("Redis subscription failed:", err)
 		return
@@ -87,7 +121,7 @@ func (wc *WebSocketController) HandlePollUpdates(c *gin.Context) {
 
 	readErrors := make(chan error, 1)
 
-	// Read incoming WebSocket control messages and detect disconnects.
+	// Detect client disconnections.
 	go func() {
 		for {
 			_, _, err := conn.ReadMessage()
@@ -101,19 +135,26 @@ func (wc *WebSocketController) HandlePollUpdates(c *gin.Context) {
 	ticker := time.NewTicker(pingPeriod)
 	defer ticker.Stop()
 
-	// Forward Redis events to the browser.
+	// Forward Redis events to connected browsers.
 	for {
 		select {
 		case <-ctx.Done():
 			return
 
 		case err := <-readErrors:
-			log.Printf("WebSocket client disconnected for poll %s: %v", pollID, err)
+			log.Printf(
+				"WebSocket client disconnected for poll %s: %v",
+				pollID,
+				err,
+			)
 			return
 
 		case message, ok := <-messages:
 			if !ok {
-				log.Printf("Redis message channel closed for poll: %s", pollID)
+				log.Printf(
+					"Redis message channel closed for poll: %s",
+					pollID,
+				)
 				return
 			}
 
@@ -123,11 +164,13 @@ func (wc *WebSocketController) HandlePollUpdates(c *gin.Context) {
 				websocket.TextMessage,
 				[]byte(message.Payload),
 			); err != nil {
-				log.Printf("WebSocket write failed for poll %s: %v", pollID, err)
+				log.Printf(
+					"WebSocket write failed for poll %s: %v",
+					pollID,
+					err,
+				)
 				return
 			}
-
-			log.Printf("WebSocket event delivered for poll %s: %s", pollID, message.Payload)
 
 		case <-ticker.C:
 			conn.SetWriteDeadline(time.Now().Add(writeWait))
@@ -136,7 +179,11 @@ func (wc *WebSocketController) HandlePollUpdates(c *gin.Context) {
 				websocket.PingMessage,
 				nil,
 			); err != nil {
-				log.Printf("WebSocket ping failed for poll %s: %v", pollID, err)
+				log.Printf(
+					"WebSocket ping failed for poll %s: %v",
+					pollID,
+					err,
+				)
 				return
 			}
 		}
