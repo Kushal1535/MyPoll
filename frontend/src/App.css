@@ -1,0 +1,1091 @@
+
+/* =========================================
+   1. GLOBAL STYLES
+========================================= */
+
+#root {
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.app-layout {
+  min-height: 100vh;
+  background: #f7f8fc;
+  color: #242642;
+}
+
+/* =========================================
+   2. BRANDING
+========================================= */
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 38px;
+  color: #292b55;
+  font-family: 'Manrope', sans-serif;
+  font-size: 25px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #6258e8;
+  color: white;
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: #6258e8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+}
+
+/* =========================================
+   3. AUTHENTICATION PAGES
+========================================= */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  background:
+    radial-gradient(circle at 10% 10%, #e8eaff 0, transparent 35%),
+    radial-gradient(circle at 90% 90%, #e8f5ff 0, transparent 35%),
+    #f7f8fc;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 42px;
+  border: 1px solid #e9eaf2;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(35, 39, 75, 0.08);
+}
+
+.auth-heading {
+  margin-bottom: 28px;
+}
+
+.auth-heading h1 {
+  margin: 0 0 10px;
+  color: #242642;
+  font-family: 'Manrope', sans-serif;
+  font-size: 29px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -1px;
+}
+
+.auth-heading p {
+  margin: 0;
+  color: #777b91;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.auth-form label {
+  margin-top: 7px;
+  color: #383b59;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.field {
+  height: 49px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 14px;
+  border: 1px solid #dedfeb;
+  border-radius: 9px;
+  background: #fff;
+  color: #85889d;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field:focus-within {
+  border-color: #6258e8;
+  box-shadow: 0 0 0 3px rgba(98, 88, 232, 0.1);
+}
+
+.field input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #242642;
+  font-size: 14px;
+}
+
+.field input::placeholder {
+  color: #a2a4b4;
+}
+
+.primary-button {
+  min-height: 49px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+  margin-top: 14px;
+  border: none;
+  border-radius: 9px;
+  background: #6258e8;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: #5146d5;
+  transform: translateY(-1px);
+}
+
+.primary-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.form-error {
+  margin: 4px 0;
+  color: #d33e52;
+  font-size: 13px;
+}
+
+.auth-footer {
+  margin: 27px 0 0;
+  color: #777b91;
+  font-size: 13px;
+  text-align: center;
+}
+
+.auth-footer a {
+  color: #6258e8;
+  font-weight: 700;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+/* =========================================
+   4. NAVIGATION BAR
+========================================= */
+
+.navbar {
+  width: 100%;
+  background: #fff;
+  border-bottom: 1px solid #ececf3;
+  box-shadow: 0 2px 12px rgba(35, 39, 75, 0.035);
+}
+
+.navbar-inner,
+.navbar-content {
+  width: min(1180px, calc(100% - 48px));
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 auto;
+}
+
+.navbar a {
+  text-decoration: none;
+}
+
+.navbar .brand {
+  margin: 0;
+  font-size: 24px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: 9px;
+  color: #666a80;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  background: #f0efff;
+  color: #6258e8;
+}
+
+.nav-user,
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #383b59;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #eeecff;
+  color: #6258e8;
+  font-weight: 800;
+}
+
+.logout-button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e5e5ef;
+  border-radius: 9px;
+  background: #fff;
+  color: #666a80;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  border-color: #ffd8dc;
+  background: #fff0f1;
+  color: #d33e52;
+}
+
+/* =========================================
+   5. DASHBOARD
+========================================= */
+
+.dashboard-container {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 48px 0 72px;
+}
+
+.dashboard-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 34px;
+}
+
+.dashboard-heading h1 {
+  margin: 0 0 10px;
+  color: #242642;
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(30px, 4vw, 40px);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -1.4px;
+}
+
+.dashboard-heading p {
+  margin: 0;
+  color: #777b91;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.create-link {
+  flex-shrink: 0;
+  min-height: 48px;
+  margin: 0;
+  text-decoration: none;
+}
+
+/* =========================================
+   6. STATISTICS CARDS
+========================================= */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 46px;
+}
+
+.stat-card {
+  min-height: 116px;
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  padding: 24px;
+  border: 1px solid #ececf3;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(35, 39, 75, 0.035);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(35, 39, 75, 0.07);
+}
+
+.stat-icon {
+  width: 49px;
+  height: 49px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+}
+
+.stat-icon.purple {
+  background: #f0efff;
+  color: #6258e8;
+}
+
+.stat-icon.blue {
+  background: #eaf4ff;
+  color: #3685d8;
+}
+
+.stat-icon.green {
+  background: #e8f8f0;
+  color: #279b68;
+}
+
+.stat-card span {
+  display: block;
+  margin-bottom: 7px;
+  color: #777b91;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stat-card strong {
+  display: block;
+  color: #242642;
+  font-family: 'Manrope', sans-serif;
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* =========================================
+   7. POLL LIST
+========================================= */
+
+.poll-section {
+  margin-top: 8px;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.section-heading h2 {
+  margin: 0 0 6px;
+  color: #242642;
+  font-family: 'Manrope', sans-serif;
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.section-heading p {
+  margin: 0;
+  color: #85889d;
+  font-size: 13px;
+}
+
+.refresh-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid #e2e2ed;
+  border-radius: 9px;
+  background: #fff;
+  color: #555970;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.refresh-button:hover {
+  border-color: #6258e8;
+  color: #6258e8;
+}
+
+.refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.poll-list {
+  display: grid;
+  gap: 17px;
+}
+
+.poll-card {
+  padding: 25px;
+  border: 1px solid #ececf3;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(35, 39, 75, 0.035);
+}
+
+.poll-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.status.active {
+  background: #e8f8f0;
+  color: #21875c;
+}
+
+.status.closed {
+  background: #f0f0f4;
+  color: #777b91;
+}
+
+.poll-card h3 {
+  margin: 12px 0 7px;
+  color: #292b48;
+  font-family: 'Manrope', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.poll-card-top p {
+  margin: 0;
+  color: #85889d;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.poll-vote-count {
+  min-width: 70px;
+  text-align: right;
+}
+
+.poll-vote-count strong {
+  display: block;
+  color: #6258e8;
+  font-family: 'Manrope', sans-serif;
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.poll-vote-count span {
+  color: #85889d;
+  font-size: 12px;
+}
+
+.poll-options-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.option-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #eeeef5;
+  border-radius: 9px;
+  background: #fafaff;
+  color: #5f6278;
+  font-size: 13px;
+}
+
+.option-summary strong {
+  color: #292b48;
+  font-size: 13px;
+}
+
+.poll-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-top: 21px;
+  padding-top: 17px;
+  border-top: 1px solid #eeeef4;
+}
+
+.poll-card-footer > span {
+  color: #9698a9;
+  font-size: 12px;
+}
+
+.poll-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.secondary-button {
+  min-height: 36px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid #e3e3ed;
+  border-radius: 8px;
+  background: #fff;
+  color: #555970;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.secondary-button:hover {
+  border-color: #6258e8;
+  color: #6258e8;
+}
+
+/* =========================================
+   8. CREATE POLL PAGE
+========================================= */
+
+.form-page {
+  min-height: calc(100vh - 76px);
+  padding: 36px 24px 70px;
+  background:
+    radial-gradient(circle at 10% 5%, #eeedff 0, transparent 30%),
+    #f7f8fc;
+}
+
+.form-page-inner {
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 22px;
+  color: #70738a;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: #6258e8;
+}
+
+.create-card {
+  width: 100%;
+  padding: 38px 42px;
+  border: 1px solid #e9eaf2;
+  border-radius: 19px;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(35, 39, 75, 0.055);
+}
+
+.create-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+
+.create-icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 20px;
+  border-radius: 14px;
+  background: #f0efff;
+  color: #6258e8;
+}
+
+.create-heading .eyebrow {
+  margin-bottom: 9px;
+}
+
+.create-heading h1 {
+  margin: 0 0 9px;
+  color: #242642;
+  font-family: 'Manrope', sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.create-heading p {
+  max-width: 540px;
+  margin: 0;
+  color: #85889d;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* Create form fields */
+
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 23px;
+}
+
+.form-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-field-group > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #383b59;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.form-field-group > label svg {
+  color: #6258e8;
+}
+
+.optional-label {
+  margin-left: 2px;
+  color: #999bad;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.standard-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 49px;
+  padding: 13px 15px;
+  border: 1px solid #dedfeb;
+  border-radius: 9px;
+  outline: none;
+  background: #fff;
+  color: #292b48;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.standard-input::placeholder {
+  color: #a2a4b4;
+}
+
+.standard-input:focus {
+  border-color: #6258e8;
+  box-shadow: 0 0 0 3px rgba(98, 88, 232, 0.1);
+}
+
+.description-input {
+  min-height: 110px;
+  resize: vertical;
+}
+
+/* Answer options */
+
+.options-section {
+  padding: 22px;
+  border: 1px solid #ececf4;
+  border-radius: 13px;
+  background: #fafaff;
+}
+
+.options-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 17px;
+}
+
+.options-heading h3 {
+  margin: 0 0 5px;
+  color: #383b59;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.options-heading p {
+  margin: 0;
+  color: #9295a8;
+  font-size: 11px;
+}
+
+.option-count {
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: #f0efff;
+  color: #6258e8;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.option-input-row {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 10px;
+}
+
+.option-number {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #eeecff;
+  color: #6258e8;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.icon-button {
+  width: 39px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e8e3e7;
+  border-radius: 9px;
+  background: #fff;
+  color: #a0a1b1;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-button:hover:not(:disabled) {
+  border-color: #ffd3d9;
+  background: #fff1f2;
+  color: #d33e52;
+}
+
+.icon-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.add-option-button {
+  min-height: 42px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+  padding: 0 13px;
+  border: 1px dashed #c9c5f4;
+  border-radius: 9px;
+  background: #fff;
+  color: #6258e8;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-option-button:hover:not(:disabled) {
+  border-color: #6258e8;
+  background: #f4f3ff;
+}
+
+.add-option-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Create form footer */
+
+.create-form-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 20px;
+  border-top: 1px solid #eeeef4;
+}
+
+.create-form-footer p {
+  margin: 0;
+  color: #9295a8;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.submit-poll-button {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 0;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+/* =========================================
+   9. EMPTY AND ERROR STATES
+========================================= */
+
+.empty-state {
+  min-height: 230px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 35px 20px;
+  border: 1px dashed #dcdce9;
+  border-radius: 15px;
+  background: #fff;
+  color: #85889d;
+  text-align: center;
+}
+
+.empty-state h3 {
+  margin: 15px 0 7px;
+  color: #292b48;
+  font-family: 'Manrope', sans-serif;
+  font-size: 19px;
+}
+
+.empty-state p {
+  margin: 0 0 15px;
+  font-size: 13px;
+}
+
+.empty-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: #f0efff;
+  color: #6258e8;
+}
+
+.error-banner {
+  margin-bottom: 18px;
+  padding: 13px 16px;
+  border: 1px solid #ffd7dc;
+  border-radius: 9px;
+  background: #fff1f2;
+  color: #bd3549;
+  font-size: 13px;
+}
+
+/* =========================================
+   10. LOADING ANIMATION
+========================================= */
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================
+   11. TABLET RESPONSIVENESS
+========================================= */
+
+@media (max-width: 760px) {
+  .navbar-inner,
+  .navbar-content {
+    width: calc(100% - 32px);
+    min-height: 68px;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 0;
+  }
+
+  .nav-links {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .dashboard-container {
+    width: calc(100% - 32px);
+    padding-top: 32px;
+  }
+
+  .dashboard-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 35px;
+  }
+
+  .stat-card {
+    min-height: 95px;
+  }
+
+  .poll-card {
+    padding: 19px;
+  }
+
+  .create-card {
+    padding: 30px 25px;
+  }
+}
+
+/* =========================================
+   12. MOBILE RESPONSIVENESS
+========================================= */
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 28px 22px;
+  }
+
+  .auth-heading h1 {
+    font-size: 25px;
+  }
+
+  .dashboard-heading h1 {
+    font-size: 29px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  .poll-card-top {
+    flex-direction: column;
+  }
+
+  .poll-vote-count {
+    text-align: left;
+  }
+
+  .poll-options-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .poll-card-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .poll-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .secondary-button {
+    flex: 1;
+  }
+
+  .form-page {
+    padding: 24px 15px 45px;
+  }
+
+  .create-card {
+    padding: 26px 20px;
+    border-radius: 15px;
+  }
+
+  .create-heading h1 {
+    font-size: 26px;
+  }
+
+  .options-section {
+    padding: 16px 12px;
+  }
+
+  .option-input-row {
+    grid-template-columns: 28px minmax(0, 1fr) 36px;
+    gap: 7px;
+  }
+
+  .option-number {
+    width: 27px;
+    height: 27px;
+  }
+
+  .icon-button {
+    width: 36px;
+  }
+
+  .standard-input {
+    font-size: 12px;
+  }
+}
