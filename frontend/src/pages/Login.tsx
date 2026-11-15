@@ -1,7 +1,14 @@
 
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Activity, Mail, Lock, ArrowRight } from 'lucide-react'
+import {
+  Activity,
+  Mail,
+  Lock,
+  ArrowRight,
+  Eye,
+  EyeOff,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
@@ -10,6 +17,7 @@ export default function Login() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -32,7 +40,9 @@ export default function Login() {
     <main className="auth-page">
       <div className="auth-card">
         <Link to="/" className="brand">
-          <span className="brand-icon"><Activity size={22} /></span>
+          <span className="brand-icon">
+            <Activity size={22} />
+          </span>
           MyPoll
         </Link>
 
@@ -51,6 +61,7 @@ export default function Login() {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
               required
             />
           </div>
@@ -59,12 +70,31 @@ export default function Login() {
           <div className="field">
             <Lock size={18} />
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
               required
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'inherit',
+              }}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
 
           {error && <p className="form-error">{error}</p>}

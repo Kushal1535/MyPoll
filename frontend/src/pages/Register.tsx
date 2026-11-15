@@ -8,6 +8,8 @@ import {
   Lock,
   ArrowRight,
   CheckCircle2,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -18,6 +20,7 @@ export default function Register() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [registered, setRegistered] = useState(false)
@@ -142,7 +145,7 @@ export default function Register() {
             <Lock size={18} />
             <input
               id="register-password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="Create a password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -150,6 +153,24 @@ export default function Register() {
               autoComplete="new-password"
               required
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'inherit',
+              }}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
 
           {error && <p className="form-error">{error}</p>}
