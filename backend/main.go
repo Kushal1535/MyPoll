@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"log"
 	"net/http"
 	"os"
@@ -25,7 +26,6 @@ var mongoClient *mongo.Client
 var redisClient *redis.Client
 
 // Connect to MongoDB using MONGODB_URI.
-// Falls back to local MongoDB during development.
 func connectMongoDB() {
 	client, err := config.ConnectMongoDB()
 	if err != nil {
@@ -37,39 +37,80 @@ func connectMongoDB() {
 }
 
 // Connect to Redis using REDIS_URL.
-// Supports hosted Redis services with TLS.
+// Supports Upstash Redis with TLS.
 func connectRedis() {
 	redisURL := strings.TrimSpace(os.Getenv("REDIS_URL"))
 
+	var redisOptions *redis.Options
+
 	if redisURL != "" {
-		redisOptions, err := redis.ParseURL(redisURL)
+		parsedOptions, err := redis.ParseURL(redisURL)
 		if err != nil {
 			log.Fatal("Invalid REDIS_URL:", err)
 		}
 
-		redisClient = redis.NewClient(redisOptions)
+		if strings.HasPrefix(redisURL, "rediss://") {
+			parsedOptions.TLSConfig = &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			}
+		}
+
+		redisOptions = parsedOptions
 	} else {
 		// Local development fallback.
-		redisClient = redis.NewClient(&redis.Options{
+		redisOptions = &redis.Options{
 			Addr: "127.0.0.1:6379",
-		})
+		}
 	}
+
+	redisOptions.DialTimeout = 10 * time.Second
+	redisOptions.ReadTimeout = 5 * time.Second
+	redisOptions.WriteTimeout = 5 * time.Second
+
+	redisClient = redis.NewClient(redisOptions)
 
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		10*time.Second,
+		20*time.Second,
 	)
 	defer cancel()
 
-	if err := redisClient.Ping(ctx).Err(); err != nil {
-		log.Fatal("Redis connection failed:", err)
+	var lastErr error
+
+	for attempt := 1; attempt <= 5; attempt++ {
+		lastErr = redisClient.Ping(ctx).Err()
+
+		if lastErr == nil {
+			log.Println("Redis connected successfully!")
+			return
+		}
+
+		log.Printf(
+			"Redis connection attempt %d failed: %v",
+			attempt,
+			lastErr,
+		)
+
+		if ctx.Err() != nil {
+			break
+		}
+
+		select {
+		case <-ctx.Done():
+			break
+		case <-time.After(2 * time.Second):
+		}
+
+		if ctx.Err() != nil {
+			break
+		}
 	}
 
-	log.Println("Redis connected successfully!")
+	_ = redisClient.Close()
+	log.Fatal("Redis connection failed after retries:", lastErr)
 }
 
 // Configure allowed frontend origins.
-// FRONTEND_URL can contain comma-separated origins.
 func corsMiddleware() gin.HandlerFunc {
 	allowedOrigins := map[string]bool{
 		"http://localhost:5173": true,
@@ -118,15 +159,18 @@ func main() {
 		log.Fatal("JWT_SECRET environment variable is required")
 	}
 
-	// Initialize database connections.
+	// Initialize MongoDB.
 	connectMongoDB()
+
 	defer func() {
 		if err := mongoClient.Disconnect(context.Background()); err != nil {
 			log.Println("MongoDB disconnect error:", err)
 		}
 	}()
 
+	// Initialize Redis.
 	connectRedis()
+
 	defer func() {
 		if err := redisClient.Close(); err != nil {
 			log.Println("Redis disconnect error:", err)
@@ -147,7 +191,6 @@ func main() {
 		15*time.Second,
 	)
 
-	// Authentication service.
 	authService := services.NewAuthService(
 		userCollection,
 		jwtSecret,
@@ -159,7 +202,7 @@ func main() {
 		log.Fatal("Failed to create user indexes:", err)
 	}
 
-	// Unique vote index: one vote per voter per poll.
+	// Unique vote index.
 	_, err := voteCollection.Indexes().CreateOne(
 		ctx,
 		mongo.IndexModel{
@@ -180,7 +223,7 @@ func main() {
 	// Initialize authentication controller.
 	authController := controllers.NewAuthController(authService)
 
-	// Initialize poll service with MongoDB and Redis.
+	// Initialize poll service.
 	pollService := services.NewPollService(
 		pollCollection,
 		voteCollection,
@@ -265,16 +308,9 @@ func main() {
 	// API routes.
 	api := router.Group("/api")
 
-	// Public authentication routes.
 	routes.RegisterAuthRoutes(api, authController)
-
-	// Poll creation and public retrieval routes.
 	routes.RegisterPollRoutes(api, pollController)
-
-	// Public voting route.
 	routes.RegisterVoteRoutes(api, voteController)
-
-	// WebSocket route for live poll updates.
 	routes.RegisterWebSocketRoutes(api, websocketController)
 
 	// Protected authentication test endpoint.
