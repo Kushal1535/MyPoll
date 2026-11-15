@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"log"
 	"net/http"
 	"os"
@@ -25,7 +24,7 @@ import (
 var mongoClient *mongo.Client
 var redisClient *redis.Client
 
-// Connect to MongoDB using MONGODB_URI.
+// Connect to MongoDB using the existing database configuration.
 func connectMongoDB() {
 	client, err := config.ConnectMongoDB()
 	if err != nil {
@@ -36,8 +35,7 @@ func connectMongoDB() {
 	log.Println("MongoDB connected successfully!")
 }
 
-// Connect to Redis using REDIS_URL.
-// Supports Upstash Redis with TLS.
+// Connect to Redis.
 func connectRedis() {
 	redisURL := strings.TrimSpace(os.Getenv("REDIS_URL"))
 
@@ -49,15 +47,9 @@ func connectRedis() {
 			log.Fatal("Invalid REDIS_URL:", err)
 		}
 
-		if strings.HasPrefix(redisURL, "rediss://") {
-			parsedOptions.TLSConfig = &tls.Config{
-				MinVersion: tls.VersionTLS12,
-			}
-		}
-
+		// redis.ParseURL automatically configures TLS for rediss:// URLs.
 		redisOptions = parsedOptions
 	} else {
-		// Local development fallback.
 		redisOptions = &redis.Options{
 			Addr: "127.0.0.1:6379",
 		}
@@ -75,39 +67,12 @@ func connectRedis() {
 	)
 	defer cancel()
 
-	var lastErr error
-
-	for attempt := 1; attempt <= 5; attempt++ {
-		lastErr = redisClient.Ping(ctx).Err()
-
-		if lastErr == nil {
-			log.Println("Redis connected successfully!")
-			return
-		}
-
-		log.Printf(
-			"Redis connection attempt %d failed: %v",
-			attempt,
-			lastErr,
-		)
-
-		if ctx.Err() != nil {
-			break
-		}
-
-		select {
-		case <-ctx.Done():
-			break
-		case <-time.After(2 * time.Second):
-		}
-
-		if ctx.Err() != nil {
-			break
-		}
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		_ = redisClient.Close()
+		log.Fatal("Redis connection failed:", err)
 	}
 
-	_ = redisClient.Close()
-	log.Fatal("Redis connection failed after retries:", lastErr)
+	log.Println("Redis connected successfully!")
 }
 
 // Configure allowed frontend origins.
